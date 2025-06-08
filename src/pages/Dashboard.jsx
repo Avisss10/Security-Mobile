@@ -27,7 +27,6 @@ const Dashboard = () => {
       fetchLaporan();
     } catch (err) {
       alert('Gagal hapus laporan');
-      console.error(err);
     }
   };
 
@@ -43,23 +42,25 @@ const Dashboard = () => {
         <p className="text-sm text-gray-500 mt-4">Belum ada laporan hari ini.</p>
       ) : (
         laporan.map((lapor) => (
-        <ReportCard
-          key={lapor.id_laporan}
-          name={lapor.nama_user}
-          nip={lapor.nip}
-          location={lapor.nama_cabang}
-          message={lapor.deskripsi_laporan}
-          time={lapor.waktu_laporan}
-          date={lapor.tanggal_laporan}
-          foto={lapor.foto_path ? [lapor.foto_path] : []} // ⬅️ satu foto dulu
-          jenis={lapor.jenis_laporan}
-          judul={lapor.judul_laporan}
-          cuaca={lapor.kondisi_cuaca}
-          onDelete={() => handleDelete(lapor.id_laporan)}
-          canDelete={lapor.canDelete}
-        />
+          <ReportCard
+            key={lapor.id_laporan}
+            id_laporan={lapor.id_laporan}
+            name={lapor.nama_user}
+            nip={lapor.nip}
+            location={lapor.nama_cabang}
+            message={lapor.deskripsi_laporan}
+            time={lapor.waktu_laporan}
+            date={lapor.tanggal_laporan}
+            foto={lapor.foto || []}
+            jenis={lapor.jenis_laporan}
+            judul={lapor.judul_laporan}
+            cuaca={lapor.kondisi_cuaca}
+            canDelete={lapor.canDelete}
+            onDelete={() => handleDelete(lapor.id_laporan)}
+          />
         ))
       )}
+
       <FloatingCreateButton />
     </main>
   );

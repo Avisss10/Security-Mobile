@@ -1,4 +1,5 @@
 
+import pool from '../config/db.js';
 import { getLaporanHariIni, insertLaporan, deleteLaporanIfOwned } from '../models/laporanModel.js';
 
 export const getDashboardLaporan = async (req, res) => {
@@ -79,5 +80,60 @@ export const deleteLaporan = async (req, res) => {
     res.json({ message: 'Laporan berhasil dihapus' });
   } catch (err) {
     res.status(500).json({ message: 'Gagal hapus laporan', error: err.message });
+  }
+};
+
+export const updateLaporan = async (req, res) => {
+  const { id } = req.params;
+  const { jenis_laporan, judul_laporan, kondisi_cuaca, deskripsi_laporan } = req.body;
+
+  try {
+    await pool.query(
+      `UPDATE laporan
+       SET jenis_laporan = ?, judul_laporan = ?, kondisi_cuaca = ?, deskripsi_laporan = ?
+       WHERE id_laporan = ?`,
+      [jenis_laporan, judul_laporan, kondisi_cuaca, deskripsi_laporan, id]
+    );
+
+    res.json({ message: 'Laporan berhasil diupdate' });
+  } catch (err) {
+    console.error('UPDATE ERROR:', err);
+    res.status(500).json({ message: 'Gagal update laporan', error: err.message });
+  }
+};
+
+export const deleteFoto = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await pool.query('SELECT foto_path FROM foto_laporan WHERE id_foto = ?', [id]);
+    if (rows.length === 0) return res.status(404).json({ message: 'Foto tidak ditemukan' });
+
+    const filename = rows[0].foto_path;
+    await pool.query('DELETE FROM foto_laporan WHERE id_foto = ?', [id]);
+
+    const fs = await import('fs');
+    fs.unlink(`./uploads/${filename}`, () => {});
+    res.json({ message: 'Foto berhasil dihapus' });
+  } catch (err) {
+    res.status(500).json({ message: 'Gagal hapus foto', error: err.message });
+  }
+};
+
+export const tambahFotoLaporan = async (req, res) => {
+  const { id_laporan } = req.body;
+  try {
+    if (!id_laporan) return res.status(400).json({ message: 'ID laporan wajib diisi' });
+
+    const values = req.files.map((file) => [id_laporan, file.filename]);
+
+    await pool.query(
+      'INSERT INTO foto_laporan (id_laporan, foto_path) VALUES ?',
+      [values]
+    );
+
+    res.json({ message: 'Foto baru berhasil ditambahkan' });
+  } catch (err) {
+    console.error('Gagal tambah foto:', err);
+    res.status(500).json({ message: 'Gagal tambah foto', error: err.message });
   }
 };

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { MoreVertical } from 'lucide-react';
 
 const ReportCard = ({
+  id_laporan,
   name,
   nip,
   location,
@@ -33,9 +34,27 @@ const ReportCard = ({
     return new Date(tanggal).toLocaleDateString('id-ID', { weekday: 'long' });
   };
 
+  const handleManualDownload = async (path) => {
+    try {
+      const response = await fetch(`http://localhost:5000/uploads/${path}`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = path;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Gagal download gambar');
+      console.error(err);
+    }
+  };
+
   return (
     <div className="bg-white border rounded-lg p-4 shadow-sm mb-4 relative">
-      {/* Tombol More */}
+      {/* Titik 3 hanya jika milik user */}
       {canDelete && (
         <div className="absolute top-2 right-2" ref={menuRef}>
           <button onClick={() => setShowMenu(!showMenu)}>
@@ -80,18 +99,20 @@ const ReportCard = ({
           {foto.map((src, index) => (
             <div key={index} className="relative group">
               <img
-                src={`http://localhost:5000/uploads/${src}`}
+                src={`http://localhost:5000/uploads/${src.foto_path}`}
                 alt={`foto-${index}`}
                 className="w-32 h-20 object-cover rounded shadow cursor-pointer hover:brightness-90"
-                onClick={() => setSelectedImage(src)}
+                onClick={() => setSelectedImage(src.foto_path)}
               />
-              <a
-                href={`http://localhost:5000/uploads/${src}`}
-                download
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleManualDownload(src.foto_path);
+                }}
                 className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded hidden group-hover:block"
               >
                 Download
-              </a>
+              </button>
             </div>
           ))}
         </div>
@@ -129,13 +150,12 @@ const ReportCard = ({
               >
                 Tutup
               </button>
-              <a
-                href={`http://localhost:5000/uploads/${selectedImage}`}
-                download
+              <button
+                onClick={() => handleManualDownload(selectedImage)}
                 className="bg-purple-600 text-white px-4 py-1 rounded text-sm hover:bg-purple-700"
               >
                 Download
-              </a>
+              </button>
             </div>
           </div>
         </div>

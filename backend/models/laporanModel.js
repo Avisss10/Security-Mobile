@@ -1,8 +1,8 @@
 
 import pool from '../config/db.js';
 
-  export const getLaporanHariIni = async (id_user, id_cabang) => {
-  const [rows] = await pool.query(
+export const getLaporanHariIni = async (id_user, id_cabang) => {
+  const [laporanRows] = await pool.query(
     `SELECT
       l.id_laporan,
       l.id_user,
@@ -14,22 +14,28 @@ import pool from '../config/db.js';
       l.kondisi_cuaca,
       l.deskripsi_laporan,
       l.tanggal_laporan,
-      TIME_FORMAT(l.waktu_laporan, '%H:%i') AS waktu_laporan,
-      f.foto_path
+      TIME_FORMAT(l.waktu_laporan, '%H:%i') AS waktu_laporan
     FROM laporan l
     JOIN user u ON l.id_user = u.id_user
     JOIN cabang c ON l.id_cabang = c.id_cabang
-    LEFT JOIN foto_laporan f ON l.id_laporan = f.id_laporan
     WHERE l.id_cabang = ? AND l.tanggal_laporan = CURDATE()
     ORDER BY l.waktu_laporan DESC`,
     [id_cabang]
   );
 
-  return rows.map((laporan) => ({
-    ...laporan,
-    canDelete: laporan.id_user === Number(id_user),
-  }));
+  // Ambil semua foto untuk masing-masing laporan
+  for (const laporan of laporanRows) {
+    const [fotos] = await pool.query(
+      'SELECT id_foto, foto_path FROM foto_laporan WHERE id_laporan = ?',
+      [laporan.id_laporan]
+    );
+    laporan.foto = fotos;
+    laporan.canDelete = laporan.id_user === Number(id_user);
+  }
+
+  return laporanRows;
 };
+
 
 
 export const insertLaporan = async (data) => {
