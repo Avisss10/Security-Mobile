@@ -85,9 +85,24 @@ export const deleteLaporan = async (req, res) => {
 
 export const updateLaporan = async (req, res) => {
   const { id } = req.params;
-  const { jenis_laporan, judul_laporan, kondisi_cuaca, deskripsi_laporan } = req.body;
+  const { jenis_laporan, judul_laporan, kondisi_cuaca, deskripsi_laporan, id_user } = req.body;
 
   try {
+    // ✅ Validasi apakah laporan milik user
+    const [cek] = await pool.query(
+      'SELECT id_user FROM laporan WHERE id_laporan = ?',
+      [id]
+    );
+
+    if (cek.length === 0) {
+      return res.status(404).json({ message: 'Laporan tidak ditemukan' });
+    }
+
+    if (cek[0].id_user !== Number(id_user)) {
+      return res.status(403).json({ message: 'Tidak diizinkan mengedit laporan ini' });
+    }
+
+    // ✅ Update jika pemilik
     await pool.query(
       `UPDATE laporan
        SET jenis_laporan = ?, judul_laporan = ?, kondisi_cuaca = ?, deskripsi_laporan = ?
@@ -102,22 +117,34 @@ export const updateLaporan = async (req, res) => {
   }
 };
 
+
 export const deleteFoto = async (req, res) => {
   const { id } = req.params;
+
   try {
+    // Ambil path dari database
     const [rows] = await pool.query('SELECT foto_path FROM foto_laporan WHERE id_foto = ?', [id]);
+
     if (rows.length === 0) return res.status(404).json({ message: 'Foto tidak ditemukan' });
 
     const filename = rows[0].foto_path;
+
+    // Hapus dari database
     await pool.query('DELETE FROM foto_laporan WHERE id_foto = ?', [id]);
 
+    // Hapus dari filesystem
     const fs = await import('fs');
-    fs.unlink(`./uploads/${filename}`, () => {});
+    fs.unlink(`./uploads/${filename}`, (err) => {
+      if (err) console.error('Gagal hapus file:', err); // log jika error
+    });
+
     res.json({ message: 'Foto berhasil dihapus' });
   } catch (err) {
+    console.error('DELETE FOTO ERROR:', err);
     res.status(500).json({ message: 'Gagal hapus foto', error: err.message });
   }
 };
+
 
 export const tambahFotoLaporan = async (req, res) => {
   const { id_laporan } = req.body;

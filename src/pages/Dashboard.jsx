@@ -6,7 +6,7 @@ import FloatingCreateButton from '../components/FloatingCreateButton';
 const Dashboard = () => {
   const [laporan, setLaporan] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [data, setData] = useState([]);
   const id_user = localStorage.getItem('id_user');
   const id_cabang = localStorage.getItem('id_cabang');
 
@@ -51,16 +51,21 @@ const Dashboard = () => {
             message={lapor.deskripsi_laporan}
             time={lapor.waktu_laporan}
             date={lapor.tanggal_laporan}
-            foto={lapor.foto || []}
+            foto={lapor.foto}
             jenis={lapor.jenis_laporan}
             judul={lapor.judul_laporan}
             cuaca={lapor.kondisi_cuaca}
             canDelete={lapor.canDelete}
-            onDelete={() => handleDelete(lapor.id_laporan)}
+            onUpdate={(updated) => {
+             setData((prev) =>
+                prev.map((lapor) =>
+                  lapor.id_laporan === updated.id_laporan ? updated : lapor
+                )
+              );
+           }}
           />
         ))
       )}
-
       <FloatingCreateButton />
     </main>
   );
