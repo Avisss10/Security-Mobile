@@ -1,8 +1,8 @@
-// ✅ Final ReportCard.jsx dengan fitur edit + hapus foto delay + auto refresh
-
 import { useState, useRef, useEffect } from 'react';
 import { MoreVertical } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import ConfirmDel from './ConfirmDel';
 
 const ReportCard = ({
   id_laporan,
@@ -25,6 +25,7 @@ const ReportCard = ({
   const [showEditForm, setShowEditForm] = useState(false);
   const menuRef = useRef(null);
   const [fotoLamaTerhapus, setFotoLamaTerhapus] = useState([]);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const [formData, setFormData] = useState({
     jenis_laporan: jenis,
@@ -51,11 +52,23 @@ const ReportCard = ({
     return new Date(tanggal).toLocaleDateString('id-ID', { weekday: 'long' });
   };
 
-  const handleFotoBaru = (e) => {
-    const files = Array.from(e.target.files);
-    setFotoBaru(files);
-    setPreviewBaru(files.map((f) => URL.createObjectURL(f)));
-  };
+const handleFotoBaru = (e) => {
+  const files = Array.from(e.target.files);
+  const newPreviews = files.map((f) => URL.createObjectURL(f));
+
+  // Validasi gabungan maksimal 5
+  const total = fotoLama.length + fotoBaru.length + files.length;
+  if (total > 5) {
+    toast.error('Total maksimal 5 foto', {
+      style: { backgroundColor: '#dc2626', color: 'white' }
+    });
+    return;
+  }
+
+  setFotoBaru((prev) => [...prev, ...files]);
+  setPreviewBaru((prev) => [...prev, ...newPreviews]);
+};
+
 
   const handleDeleteFotoLama = (id_foto) => {
     setFotoLama(fotoLama.filter((f) => f.id_foto !== id_foto));
@@ -64,6 +77,13 @@ const ReportCard = ({
 
   const handleSubmitUpdate = async () => {
     const id_user = localStorage.getItem('id_user');
+    const totalFoto = fotoLama.length + fotoBaru.length;
+    if (totalFoto > 5) {
+      toast.error('Maksimal total 5 foto per laporan', {
+        style: { backgroundColor: '#dc2626', color: 'white' }
+      });
+      return;
+    }
     try {
       await axios.put(`http://localhost:5000/laporan/${id_laporan}`, {
         ...formData,
@@ -72,6 +92,9 @@ const ReportCard = ({
 
       for (const id of fotoLamaTerhapus) {
         await axios.delete(`http://localhost:5000/laporan/foto/${id}`);
+        toast.success('Foto berhasil dihapus', {
+          style: { backgroundColor: '#7c3aed', color: 'white' }
+        });
       }
 
       if (fotoBaru.length > 0) {
@@ -82,12 +105,19 @@ const ReportCard = ({
       }
 
       const res = await axios.get(`http://localhost:5000/laporan/${id_laporan}`);
+      res.data.canDelete = true;
       if (onUpdate) onUpdate(res.data);
       setShowEditForm(false);
+
     } catch (err) {
-      console.error('UPDATE ERROR:', err.response?.data || err.message);
+      toast.error('Gagal update laporan: ' + (err.response?.data?.message || err.message), {
+        style: { backgroundColor: '#dc2626', color: 'white' }
+    });
       alert('Gagal update laporan: ' + (err.response?.data?.message || err.message));
     }
+    toast.success('Laporan berhasil diperbarui', {
+     style: { backgroundColor: '#7c3aed', color: 'white' }
+    });
   };
 
   const handleManualDownload = async (path) => {
@@ -103,7 +133,9 @@ const ReportCard = ({
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert('Gagal download gambar');
+      toast.error('Gagal download gambar', {
+        style: { backgroundColor: '#dc2626', color: 'white' }
+      });
     }
   };
 
@@ -116,8 +148,35 @@ const ReportCard = ({
           </button>
           {showMenu && (
             <div className="absolute right-0 top-6 bg-white border border-gray-200 rounded shadow-md z-10 text-sm">
-              <button className="block w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100" onClick={() => { onDelete(); setShowMenu(false); }}>Hapus</button>
-              <button className="block w-full px-4 py-2 text-left text-blue-600 hover:bg-gray-100" onClick={() => { setShowEditForm(true); setShowMenu(false); }}>Edit</button>
+              <button
+                className="block w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100"
+                onClick={() => {
+                  setShowConfirm(true);
+                  setShowMenu(false);
+                }}
+              >
+                Hapus
+              </button>
+              <button
+                className="block w-full px-4 py-2 text-left text-blue-600 hover:bg-gray-100"
+                onClick={() => {
+                  setFormData({
+                    jenis_laporan: jenis,
+                    judul_laporan: judul,
+                    kondisi_cuaca: cuaca,
+                    deskripsi_laporan: message,
+                  });
+                  setFotoLama(foto);          
+                  setFotoBaru([]);           
+                  setPreviewBaru([]);         
+                  setFotoLamaTerhapus([]);    
+                  setShowEditForm(true);     
+                  setShowMenu(false);         
+                }}
+              >
+               Edit
+              </button>
+
             </div>
           )}
         </div>
@@ -136,25 +195,28 @@ const ReportCard = ({
 
       {foto.length > 0 && (
         <div className="flex gap-2 overflow-x-auto mb-3">
-          {foto.map((src, index) => (
-            <div key={index} className="relative group">
-              <img
-                src={`http://localhost:5000/uploads/${src.foto_path}`}
-                alt={`foto-${index}`}
-                className="w-32 h-20 object-cover rounded shadow cursor-pointer hover:brightness-90"
-                onClick={() => setSelectedImage(src.foto_path)}
-              />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleManualDownload(src.foto_path);
-                }}
-                className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded hidden group-hover:block"
-              >
-                Download
-              </button>
-            </div>
-          ))}
+          {foto.map((src, index) => {
+            const path = typeof src === 'string' ? src : src.foto_path;
+            return (
+              <div key={index} className="relative group">
+                <img
+                  src={`http://localhost:5000/uploads/${path}`}
+                  alt={`foto-${index}`}
+                  className="w-32 h-20 object-cover rounded shadow cursor-pointer hover:brightness-90"
+                  onClick={() => setSelectedImage(path)}
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleManualDownload(path);
+                  }}
+                  className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded hidden group-hover:block"
+                >
+                  Download
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -209,9 +271,25 @@ const ReportCard = ({
             </div>
 
             <input type="file" multiple accept="image/*" onChange={handleFotoBaru} className="block w-full mt-2" />
-            <div className="flex gap-2 mt-2 overflow-x-auto">
+            <div className="flex gap-2 flex-wrap mt-2">
               {previewBaru.map((src, i) => (
-                <img key={i} src={src} className="w-20 h-16 object-cover rounded" />
+                <div key={i} className="relative w-20 h-20">
+                  <img
+                    src={src}
+                    alt={`preview-${i}`}
+                    className="w-full h-full object-cover rounded"
+                  />
+                  <button
+                    onClick={() => {
+                      setFotoBaru((prev) => prev.filter((_, idx) => idx !== i));
+                      setPreviewBaru((prev) => prev.filter((_, idx) => idx !== i));
+                    }}
+                    className="absolute -top-2 -right-2 bg-red-600 text-white w-5 h-5 rounded-full text-xs flex items-center justify-center shadow"
+                    title="Hapus"
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
             </div>
 
@@ -222,6 +300,17 @@ const ReportCard = ({
           </div>
         </div>
       )}
+      <ConfirmDel
+        open={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={() => {
+          onDelete();
+          toast.success('Laporan berhasil dihapus', {
+            style: { backgroundColor: '#7c3aed', color: 'white' },
+          });
+          setShowConfirm(false);
+        }}
+      />
     </div>
   );
 };

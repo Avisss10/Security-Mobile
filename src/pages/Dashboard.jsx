@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import ReportCard from '../components/ReportCard';
 import FloatingCreateButton from '../components/FloatingCreateButton';
 
 const Dashboard = () => {
   const [laporan, setLaporan] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState([]);
   const id_user = localStorage.getItem('id_user');
   const id_cabang = localStorage.getItem('id_cabang');
 
@@ -21,14 +21,22 @@ const Dashboard = () => {
     }
   };
 
+
   const handleDelete = async (id_laporan) => {
     try {
+      const id_user = localStorage.getItem('id_user');
       await axios.delete(`http://localhost:5000/laporan/${id_laporan}/${id_user}`);
-      fetchLaporan();
+      fetchLaporan(); // refresh
+      toast.success('Laporan berhasil dihapus', {
+        style: { backgroundColor: '#7c3aed', color: 'white' },
+      });
     } catch (err) {
-      alert('Gagal hapus laporan');
+      toast.error(err.response?.data?.message || 'Gagal hapus laporan', {
+        style: { backgroundColor: '#dc2626', color: 'white' },
+      });
     }
   };
+
 
   useEffect(() => {
     fetchLaporan();
@@ -56,13 +64,8 @@ const Dashboard = () => {
             judul={lapor.judul_laporan}
             cuaca={lapor.kondisi_cuaca}
             canDelete={lapor.canDelete}
-            onUpdate={(updated) => {
-             setData((prev) =>
-                prev.map((lapor) =>
-                  lapor.id_laporan === updated.id_laporan ? updated : lapor
-                )
-              );
-           }}
+            onDelete={() => handleDelete(lapor.id_laporan)}
+            onUpdate={fetchLaporan}
           />
         ))
       )}

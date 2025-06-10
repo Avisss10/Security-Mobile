@@ -25,11 +25,23 @@ function AppContent() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/login" element={<Login />} />
         </Routes>
-        <ToastContainer position="top-center" autoClose={2500} />
-      </main>
-    </div>
-  );
-}
+
+        <ToastContainer
+          position="top-center"
+          autoClose={2500}
+          hideProgressBar
+          closeOnClick
+          pauseOnHover
+          draggable
+          theme="colored"
+          toastClassName="custom-toast"
+          bodyClassName="custom-toast-body"
+        />
+
+              </main>
+            </div>
+          );
+        }
 
 function App() {
   return (
