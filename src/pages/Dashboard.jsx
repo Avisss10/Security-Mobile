@@ -1,16 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import ReportCard from '../components/ReportCard';
 import FloatingCreateButton from '../components/FloatingCreateButton';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Dashboard = () => {
   const [laporan, setLaporan] = useState([]);
   const [loading, setLoading] = useState(true);
   const id_user = localStorage.getItem('id_user');
   const id_cabang = localStorage.getItem('id_cabang');
+  const mainRef = useRef(null);
 
   const fetchLaporan = async () => {
+    setLoading(true);
+    if (mainRef.current) {
+      mainRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     try {
       const res = await axios.get(`http://localhost:5000/laporan/dashboard/${id_user}/${id_cabang}`);
       setLaporan(res.data);
@@ -21,12 +27,11 @@ const Dashboard = () => {
     }
   };
 
-
   const handleDelete = async (id_laporan) => {
     try {
       const id_user = localStorage.getItem('id_user');
       await axios.delete(`http://localhost:5000/laporan/${id_laporan}/${id_user}`);
-      fetchLaporan(); // refresh
+      fetchLaporan();
       toast.success('Laporan berhasil dihapus', {
         style: { backgroundColor: '#7c3aed', color: 'white' },
       });
@@ -37,15 +42,14 @@ const Dashboard = () => {
     }
   };
 
-
   useEffect(() => {
     fetchLaporan();
   }, []);
 
   return (
-    <main className="px-4">
+    <main ref={mainRef} className="px-4 overflow-auto max-h-screen">
       {loading ? (
-        <p>Loading...</p>
+        <LoadingSpinner />
       ) : laporan.length === 0 ? (
         <p className="text-sm text-gray-500 mt-4">Belum ada laporan hari ini.</p>
       ) : (

@@ -224,7 +224,7 @@ const handleFotoBaru = (e) => {
         <p><strong>Jenis:</strong> {jenis}</p>
         <p><strong>Judul:</strong> {judul}</p>
         <p><strong>Cuaca:</strong> {cuaca}</p>
-        <p className="pt-1">{message}</p>
+        <p className="w-full border px-3 py-2 rounded-md mb-4 text-sm whitespace-pre-wrap">{message}</p>
       </div>
 
       <div className="text-xs text-gray-500 text-right mt-3">

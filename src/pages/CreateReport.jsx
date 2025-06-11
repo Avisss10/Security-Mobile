@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ImagePlus, Shield } from 'lucide-react';
+import { toast } from 'react-toastify';
 import axios from 'axios';
-
 
 const CreateReport = () => {
   const navigate = useNavigate();
@@ -16,8 +16,12 @@ const CreateReport = () => {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    setImages(files.map(file => URL.createObjectURL(file)));
-    setImageFiles(files);
+    if (images.length + files.length > 5) {
+      toast.error('Maksimal upload 5 foto');
+      return;
+    }
+    setImages(prev => [...prev, ...files.map(file => URL.createObjectURL(file))]);
+    setImageFiles(prev => [...prev, ...files]);
   };
 
   const handleSubmit = async () => {
@@ -25,12 +29,12 @@ const CreateReport = () => {
     const id_cabang = localStorage.getItem('id_cabang');
 
     if (!id_user || !id_cabang) {
-      alert('User belum login!');
+      toast.error('User belum login!');
       return;
     }
 
     if (!jenis || !judul || !cuaca || !message) {
-      alert('Semua field wajib diisi!');
+      toast.error('Semua field wajib diisi!');
       return;
     }
 
@@ -46,11 +50,11 @@ const CreateReport = () => {
 
     try {
       await axios.post('http://localhost:5000/laporan', formData);
-      alert('Laporan berhasil dikirim!');
+      toast.success('Laporan berhasil dikirim!');
       navigate('/');
     } catch (err) {
       console.error('Upload error:', err);
-      alert('Gagal mengirim laporan: ' + err.message);
+      toast.error('Gagal mengirim laporan: ' + err.message);
     }
 
   };
@@ -72,7 +76,7 @@ const CreateReport = () => {
         <div className="space-x-2">
           <button
             className="border border-black px-4 py-1 rounded-full text-sm"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/dashboard')}
           >
             Cancel
           </button>
@@ -130,16 +134,12 @@ const CreateReport = () => {
       {/* Gambar */}
       <label
         htmlFor="image-upload"
-        className="w-full border border-dashed px-3 py-6 rounded-md flex flex-col items-center justify-center cursor-pointer text-gray-400 text-sm"
+        className="w-full border border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer text-gray-400 text-sm py-6"
       >
-      {images.length > 0 ? (
-        <img src={images[0]} alt="Uploaded" className="max-h-40 object-contain" />
-      ) : (
-        <>
-          <ImagePlus className="w-6 h-6 mb-1" />
-          Add Picture
-        </>
-      )}
+        <ImagePlus className={`mb-1 w-6 h-6`} />
+        <span className="text-gray-600 text-sm font-semibold">
+          {images.length === 0 ? 'Masukkan Foto' : 'Tambah Foto'}
+        </span>
         <input
           id="image-upload"
           type="file"
@@ -149,6 +149,30 @@ const CreateReport = () => {
           onChange={handleImageUpload}
         />
       </label>
+
+      {/* Preview thumbnails */}
+      {images.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {images.map((src, index) => (
+            <div key={index} className="relative w-20 h-20 border rounded overflow-hidden">
+              <img src={src} alt={`preview-${index}`} className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={() => {
+                  const newImages = images.filter((_, i) => i !== index);
+                  const newImageFiles = imageFiles.filter((_, i) => i !== index);
+                  setImages(newImages);
+                  setImageFiles(newImageFiles);
+                }}
+                className="absolute top-0 right-0 bg-red-600 text-white rounded-bl px-1 text-xs font-bold"
+                title="Remove"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
