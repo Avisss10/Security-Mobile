@@ -1,8 +1,11 @@
+import React, { useState } from 'react';
 import { User, MapPin, LogOut, BadgeCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import ConLogout from './ConLogout';
 
 const ProfileHeader = () => {
   const navigate = useNavigate();
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
   const userInfo = {
     name: localStorage.getItem('nama_user') || '',
@@ -10,8 +13,17 @@ const ProfileHeader = () => {
     location: localStorage.getItem('nama_cabang') || 'Cabang -',
   };
 
-  const handleLogout = () => {
-    // Di sini bisa juga clear token / session kalau pakai auth
+  const handleLogoutClick = () => {
+    setLogoutModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setLogoutModalOpen(false);
+  };
+
+  const handleConfirmLogout = () => {
+    setLogoutModalOpen(false);
+    // Clear token/session here if needed
     navigate('/login');
   };
 
@@ -22,7 +34,7 @@ const ProfileHeader = () => {
 
       {/* Logout Button */}
       <button
-        onClick={handleLogout}
+        onClick={handleLogoutClick}
         className="absolute top-4 right-4 text-white hover:text-gray-100 flex items-center gap-1 text-sm"
       >
         <LogOut className="w-4 h-4" />
@@ -74,6 +86,12 @@ const ProfileHeader = () => {
           </div>
         </div>
       </div>
+
+      <ConLogout
+        open={logoutModalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmLogout}
+      />
     </div>
   );
 };
