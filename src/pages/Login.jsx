@@ -28,7 +28,7 @@ const Login = () => {
       localStorage.setItem('nama_user', nama_user);
       localStorage.setItem('nip', userNip);
 
-      navigate('/');
+      navigate('/dashboard');
       toast.success('Login berhasil!', {
         style: { backgroundColor: '#7c3aed', color: 'white' },
       });

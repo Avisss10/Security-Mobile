@@ -8,9 +8,9 @@ const ProfileHeader = () => {
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
   const userInfo = {
-    name: localStorage.getItem('nama_user') || '',
-    nip: localStorage.getItem('nip') || '',
-    location: localStorage.getItem('nama_cabang') || 'Cabang -',
+    name: localStorage.getItem('nama_user') || '-',
+    nip: localStorage.getItem('nip') || '-',
+    location: localStorage.getItem('nama_cabang') || '-',
   };
 
   const handleLogoutClick = () => {
@@ -24,6 +24,11 @@ const ProfileHeader = () => {
   const handleConfirmLogout = () => {
     setLogoutModalOpen(false);
     // Clear token/session here if needed
+    localStorage.removeItem('id_cabang');
+    localStorage.removeItem('id_user');
+    localStorage.removeItem('nama_cabang');
+    localStorage.removeItem('nama_user');
+    localStorage.removeItem('nip');
     navigate('/login');
   };
 
