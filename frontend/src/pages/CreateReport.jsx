@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { ImagePlus, Shield } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -13,6 +14,8 @@ const CreateReport = () => {
   const [message, setMessage] = useState('');
   const [images, setImages] = useState([]);        
   const [imageFiles, setImageFiles] = useState([]); 
+  const [showReview, setShowReview] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
@@ -47,7 +50,6 @@ const CreateReport = () => {
     formData.append('deskripsi_laporan', message);
     imageFiles.forEach(file => formData.append('foto', file)); // ✅ multiple
 
-
     try {
       await axios.post('http://localhost:5000/laporan', formData);
       toast.success('Laporan berhasil dikirim!');
@@ -56,11 +58,22 @@ const CreateReport = () => {
       console.error('Upload error:', err);
       toast.error('Gagal mengirim laporan: ' + err.message);
     }
+  };
 
+  const openReview = () => {
+    if (!jenis || !judul || !cuaca || !message) {
+      toast.error('Semua field wajib diisi!');
+      return;
+    }
+    setShowReview(true);
+  };
+
+  const closeReview = () => {
+    setShowReview(false);
   };
 
   return (
-    <div className="min-h-screen p-4">
+    <div className="min-h-screen p-4 relative">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-2">
@@ -82,9 +95,9 @@ const CreateReport = () => {
           </button>
           <button
             className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-1 rounded-full text-sm"
-            onClick={handleSubmit}
+            onClick={openReview}
           >
-            Post
+            Review
           </button>
         </div>
       </div>
@@ -173,7 +186,60 @@ const CreateReport = () => {
           ))}
         </div>
       )}
-    </div>
+
+      {/* Review Popup */}
+      {showReview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-lg p-6 w-96 max-w-full z-50">
+            {images.length > 0 && (
+              <div className="mb-4 flex flex-wrap gap-2">
+                {images.map((src, index) => (
+                  <img
+                    key={index}
+                    src={src}
+                    alt={`review-${index}`}
+                    className="w-20 h-20 object-cover rounded cursor-pointer"
+                    onClick={() => setModalImage(src)}
+                  />
+                ))}
+              </div>
+            )}
+            <div className="mb-2"><strong>Jenis:</strong> {jenis}</div>
+            <div className="mb-2"><strong>Judul:</strong> {judul}</div>
+            <div className="mb-2"><strong>Cuaca:</strong> {cuaca}</div>
+            <div className="mb-4 max-h-96 overflow-y-auto border p-2 rounded text-sm whitespace-pre-wrap">{message}</div>
+
+            <div className="flex justify-end space-x-4">
+              <button
+                className="border border-gray-400 px-4 py-1 rounded text-sm"
+                onClick={closeReview}
+              >
+                Edit
+              </button>
+              <button
+                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-1 rounded text-sm"
+                onClick={() => {
+                  closeReview();
+                  handleSubmit();
+                }}
+              >
+                Post
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Image Modal Popup */}
+      {modalImage && ReactDOM.createPortal(
+        <div
+          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[1000]"
+          onClick={() => setModalImage(null)}
+        >
+            <img src={modalImage} alt="modal" className="max-w-full max-h-[70vh]" />
+        </div>,
+        document.body
+      )}
+  </div>
   );
 };
 

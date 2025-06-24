@@ -205,15 +205,6 @@ const handleFotoBaru = (e) => {
                   className="w-32 h-20 object-cover rounded shadow cursor-pointer hover:brightness-90"
                   onClick={() => setSelectedImage(path)}
                 />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleManualDownload(path);
-                  }}
-                  className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded hidden group-hover:block"
-                >
-                  Download
-                </button>
               </div>
             );
           })}
@@ -232,14 +223,17 @@ const handleFotoBaru = (e) => {
       </div>
 
       {selectedImage && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50" onClick={() => setSelectedImage(null)}>
-          <div className="bg-white rounded p-4 relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-50" onClick={() => setSelectedImage(null)}>
             <img src={`http://localhost:5000/uploads/${selectedImage}`} alt="Preview" className="max-h-[70vh] mx-auto rounded" />
-            <div className="mt-4 flex justify-center gap-4">
-              <button onClick={() => setSelectedImage(null)} className="bg-gray-700 text-white px-4 py-1 rounded text-sm hover:bg-gray-800">Tutup</button>
-              <button onClick={() => handleManualDownload(selectedImage)} className="bg-purple-600 text-white px-4 py-1 rounded text-sm hover:bg-purple-700">Download</button>
-            </div>
-          </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleManualDownload(selectedImage);
+              }}
+              className="mt-3 bg-black-600 hover:bg-black-700 text-white text-sm px-4 py-2 rounded"
+            >
+              Download
+            </button>
         </div>
       )}
 
@@ -259,7 +253,7 @@ const handleFotoBaru = (e) => {
 
             <input type="text" placeholder="Judul" value={formData.judul_laporan} onChange={(e) => setFormData({ ...formData, judul_laporan: e.target.value })} className="w-full border px-3 py-2 rounded" />
             <input type="text" placeholder="Cuaca" value={formData.kondisi_cuaca} onChange={(e) => setFormData({ ...formData, kondisi_cuaca: e.target.value })} className="w-full border px-3 py-2 rounded" />
-            <textarea placeholder="Deskripsi" value={formData.deskripsi_laporan} onChange={(e) => setFormData({ ...formData, deskripsi_laporan: e.target.value })} className="w-full border px-3 py-2 rounded" />
+            <textarea placeholder="Deskripsi" value={formData.deskripsi_laporan} onChange={(e) => setFormData({ ...formData, deskripsi_laporan: e.target.value })} className="w-full border px-3 py-2 h-64 rounded" />
 
             <div className="flex gap-2 flex-wrap">
               {fotoLama.map((f, i) => (

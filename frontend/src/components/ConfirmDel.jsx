@@ -8,16 +8,16 @@ const ConfirmDel = ({ open, onClose, onConfirm }) => {
       <div className="bg-white rounded-lg shadow p-6 max-w-sm w-full">
         <h2 className="text-lg font-semibold mb-4">Konfirmasi Hapus</h2>
         <p className="text-sm text-gray-600 mb-6">Yakin ingin menghapus laporan ini?</p>
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-center gap-4">
           <button
             onClick={onClose}
-            className="px-4 py-1 rounded bg-gray-300 text-black text-sm hover:bg-gray-400"
+            className="px-5 py-2 rounded bg-gray-300 text-black text-base hover:bg-gray-400"
           >
             Batal
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-1 rounded bg-red-600 text-white text-sm hover:bg-red-700"
+            className="px-5 py-2 rounded bg-red-600 text-white text-base hover:bg-red-700"
           >
             Hapus
           </button>
